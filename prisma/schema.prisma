@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String   @id @default(uuid())
+  name       String
+  username   String   @unique
+  email      String   @unique
+  password   String
+  role       String   @default("Staff") // "Admin", "Manager", "Staff"
+  status     String   @default("active") // "active", "inactive"
+  created_at DateTime @default(now())
+
+  activityLogs ActivityLog[]
+  receipts     Receipt[]
+  expenses     Expense[]
+}
+
+model Customer {
+  id         String   @id @default(uuid())
+  name       String
+  phone      String?
+  email      String?
+  address    String?
+  note       String?
+  created_at DateTime @default(now())
+
+  projects Project[]
+}
+
+model Project {
+  id             String    @id @default(uuid())
+  name           String
+  customer_id    String?
+  contract_value Float
+  status         String    @default("đang thi công") // "đang thi công", "tạm dừng", "đã hoàn thành"
+  note           String?
+  start_date     DateTime?
+  created_at     DateTime  @default(now())
+
+  customer  Customer? @relation(fields: [customer_id], references: [id])
+  receipts  Receipt[]
+  expenses  Expense[]
+}
+
+model Receipt {
+  id         String   @id @default(uuid())
+  project_id String
+  amount     Float
+  date       DateTime @default(now())
+  note       String?
+  created_by String
+  created_at DateTime @default(now())
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [created_by], references: [id])
+}
+
+model Expense {
+  id         String   @id @default(uuid())
+  project_id String
+  type       String   // "material", "labor"
+  amount     Float
+  date       DateTime @default(now())
+  note       String?
+  created_by String
+  created_at DateTime @default(now())
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [created_by], references: [id])
+}
+
+model ActivityLog {
+  id         String   @id @default(uuid())
+  user_id    String
+  action     String   // "create", "update", "delete"
+  entity     String   // "user", "project", "receipt", "expense", "customer"
+  entity_id  String
+  old_data   String?  // JSON string
+  new_data   String?  // JSON string
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id])
+}
