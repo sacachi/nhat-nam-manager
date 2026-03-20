@@ -21,6 +21,14 @@ Phương án khuyến nghị là **Triển khai trên VPS sử dụng Docker (Do
 ### Giai đoạn 2: Cấu hình Source Code và Build
 1. **Thiết lập biến môi trường (`.env`):**
    - Định nghĩa các hằng số môi trường an toàn. Ví dụ: URL trỏ tới file cơ sở dữ liệu SQLite: `DATABASE_URL="file:/data/sqlite.db"`.
+   - **Google Drive OAuth (tùy chọn):**
+     ```
+     GOOGLE_CLIENT_ID=<your-client-id>
+     GOOGLE_CLIENT_SECRET=<your-client-secret>
+     GOOGLE_REDIRECT_URI=https://your-domain.com/api/auth/google-callback
+     GOOGLE_REFRESH_TOKEN=<from-oauth-setup>
+     GOOGLE_DRIVE_ROOT_FOLDER_ID=<drive-folder-id>
+     ```
 2. **Tạo `Dockerfile`:**
    - Cấu hình file image Docker dựa trên Node.js để build ứng dụng (sử dụng multi-stage build cho nhẹ file image).
    - Đảm bảo có câu lệnh `npx prisma generate` đính kèm.

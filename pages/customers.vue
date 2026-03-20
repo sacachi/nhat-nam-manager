@@ -29,7 +29,11 @@
 
         <Column field="phone" header="Số điện thoại" sortable style="min-width: 10rem">
           <template #body="{ data }">
-            <span class="text-slate-600">{{ data.phone || '—' }}</span>
+            <div v-if="isPhoneMasked(data.phone)" class="flex items-center gap-2 text-slate-400 italic">
+              <i class="pi pi-lock"></i>
+              <span>Không có quyền xem</span>
+            </div>
+            <span v-else class="text-slate-600">{{ data.phone || '—' }}</span>
           </template>
         </Column>
 
@@ -96,11 +100,17 @@
 <script setup>
 import { ref, computed } from 'vue';
 
+const { user: currentUser } = useAuth()
+
 const searchQuery = ref('');
 const loading = ref(false);
 const submitted = ref(false);
 const customerDialog = ref(false);
 const dialogTitle = ref('Khách hàng');
+
+const isPhoneMasked = (phone) => {
+  return phone && phone.includes('*')
+}
 
 const emptyCustomer = { id: null, name: '', phone: '', email: '', address: '', note: '' };
 const customer = ref({ ...emptyCustomer });

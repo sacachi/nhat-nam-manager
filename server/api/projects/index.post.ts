@@ -3,6 +3,9 @@ import { getAuthUser } from '~/server/utils/auth'
 
 export default defineEventHandler(async (event) => {
   const user = getAuthUser(event)
+  if (['Design', 'Construction'].includes(user.role)) {
+    throw createError({ statusCode: 403, statusMessage: 'Không có quyền tạo công trình' })
+  }
   const body = await readBody(event)
   try {
     const project = await prisma.project.create({

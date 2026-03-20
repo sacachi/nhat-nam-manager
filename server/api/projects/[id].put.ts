@@ -3,6 +3,9 @@ import { getAuthUser } from '~/server/utils/auth'
 
 export default defineEventHandler(async (event) => {
   const user = getAuthUser(event)
+  if (['Design', 'Construction'].includes(user.role)) {
+    throw createError({ statusCode: 403, statusMessage: 'Không có quyền sửa công trình' })
+  }
   const id = getRouterParam(event, 'id')
   if (!id) throw createError({ statusCode: 400, statusMessage: 'Missing ID' })
   

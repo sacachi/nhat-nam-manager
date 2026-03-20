@@ -121,8 +121,9 @@ const user = ref({ ...emptyUser });
 
 const roles = ref([
     { label: 'Admin', value: 'Admin' },
-    { label: 'Manager', value: 'Manager' },
-    { label: 'Staff', value: 'Staff' }
+    { label: 'Sale', value: 'Sale' },
+    { label: 'Design', value: 'Design' },
+    { label: 'Thi công', value: 'Construction' }
 ]);
 
 // Fetch Data from Server
@@ -139,8 +140,9 @@ const filteredUsers = computed(() => {
 const getRoleSeverity = (role) => {
     switch (role) {
         case 'Admin': return 'danger';
-        case 'Manager': return 'warning';
-        case 'Staff': return 'info';
+        case 'Sale': return 'success';
+        case 'Design': return 'info';
+        case 'Construction': return 'warn';
         default: return null;
     }
 };

@@ -45,6 +45,20 @@
             </template>
         </Column>
 
+        <Column header="Ảnh" style="min-width: 6rem">
+          <template #body="{ data }">
+            <div v-if="data.images" class="flex gap-1">
+              <a v-for="(img, idx) in parsedImages(data.images).slice(0, 2)" :key="idx" :href="img.url" target="_blank">
+                <img :src="getImageSrc(img)" :alt="img.name" class="w-10 h-10 object-cover rounded border hover:opacity-80" />
+              </a>
+              <span v-if="parsedImages(data.images).length > 2" class="w-10 h-10 bg-slate-100 rounded border flex items-center justify-center text-xs text-slate-500">
+                +{{ parsedImages(data.images).length - 2 }}
+              </span>
+            </div>
+            <span v-else class="text-slate-300 text-sm">—</span>
+          </template>
+        </Column>
+
         <Column field="created_by_name" header="Người thu" sortable style="min-width: 10rem">
              <template #body="{ data }">
             <Tag severity="secondary" rounded :value="data.created_by_name || data.created_by"></Tag>
@@ -61,7 +75,7 @@
     </div>
 
     <!-- Create/Edit Dialog -->
-    <Dialog v-model:visible="receiptDialog" :style="{ width: '450px' }" :header="dialogTitle" :modal="true" class="p-fluid">
+    <Dialog v-model:visible="receiptDialog" :style="{ width: '550px' }" :header="dialogTitle" :modal="true" class="p-fluid">
       <div class="flex flex-col gap-4 mt-4">
         <div class="flex flex-col gap-1">
             <label for="project" class="font-medium text-slate-700">Công trình *</label>
@@ -84,6 +98,33 @@
              <label for="note" class="font-medium text-slate-700">Ghi chú</label>
              <Textarea id="note" v-model="receipt.note" rows="3" placeholder="Nhập lý do hoặc thông tin người nộp..." />
          </div>
+
+        <div class="flex flex-col gap-1">
+          <label class="font-medium text-slate-700">Hình ảnh chứng từ</label>
+          <FileUpload
+            mode="basic"
+            :multiple="true"
+            accept="image/*"
+            :maxFileSize="10000000"
+            :auto="true"
+            chooseLabel="Chọn ảnh"
+            class="w-full"
+            :disabled="uploading"
+            @select="onFileSelect"
+          />
+          <small class="text-slate-400">Tối đa 5 ảnh, mỗi ảnh ≤ 10MB</small>
+          <div v-if="uploading" class="flex items-center gap-2 text-sm text-blue-600">
+            <i class="pi pi-spin pi-spinner"></i> Đang tải ảnh lên...
+          </div>
+          <div v-if="uploadedImages.length > 0" class="flex flex-wrap gap-2 mt-2">
+            <div v-for="(img, idx) in uploadedImages" :key="idx" class="relative group">
+              <img :src="getImageSrc(img)" :alt="img.name" class="w-20 h-20 object-cover rounded border" />
+              <button type="button" @click="removeImage(idx)" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <i class="pi pi-times text-[10px]"></i>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <template #footer>
@@ -101,9 +142,11 @@ const searchQuery = ref('');
 const selectedProject = ref(null);
 const filterDate = ref(null);
 const loading = ref(false);
+const uploading = ref(false);
 const submitted = ref(false);
 const receiptDialog = ref(false);
 const dialogTitle = ref('Chi Tiết Khoản Thu');
+const uploadedImages = ref([]);
 
 const emptyReceipt = {
     id: null,
@@ -169,6 +212,7 @@ const formatDate = (value) => {
 
 const openNew = () => {
     receipt.value = { ...emptyReceipt };
+    uploadedImages.value = [];
     submitted.value = false;
     dialogTitle.value = 'Thêm Khoản Thu Mới';
     receiptDialog.value = true;
@@ -185,6 +229,7 @@ const editReceipt = (data) => {
         date: data.date ? new Date(data.date) : null,
         amount: Number(data.amount) || null
     };
+    uploadedImages.value = parsedImages(data.images);
     dialogTitle.value = 'Chỉnh Sửa Khoản Thu';
     receiptDialog.value = true;
 };
@@ -205,25 +250,64 @@ const saveReceipt = async () => {
     if (receipt.value.amount && receipt.value.project_id) {
         loading.value = true;
         try {
+            const payload = {
+                ...receipt.value,
+                images: uploadedImages.value.length > 0 ? JSON.stringify(uploadedImages.value) : null
+            };
             if (receipt.value.id) {
                 await $fetch(`/api/receipts/${receipt.value.id}`, {
                     method: 'PUT',
-                    body: receipt.value
+                    body: payload
                 });
             } else {
                 await $fetch('/api/receipts', {
                     method: 'POST',
-                    body: receipt.value
+                    body: payload
                 });
             }
             await refresh();
             receiptDialog.value = false;
             receipt.value = { ...emptyReceipt };
+            uploadedImages.value = [];
         } catch (e) {
             console.error("Lỗi khi lưu:", e);
         } finally {
             loading.value = false;
         }
     }
+};
+
+const parsedImages = (json) => {
+  try { return json ? JSON.parse(json) : [] }
+  catch { return [] }
+};
+
+const getImageSrc = (img) => {
+  return img.thumbnailUrl || (img.fileId ? `https://lh3.googleusercontent.com/d/${img.fileId}` : img.url)
+};
+
+const onFileSelect = async (event) => {
+  uploading.value = true;
+  try {
+    const formData = new FormData();
+    const filesToUpload = event.files || [event];
+    for (const f of filesToUpload) {
+      formData.append('files', f);
+    }
+    const projectName = getProjectName(receipt.value.project_id) || 'receipt';
+    const response = await $fetch(`/api/upload-images?category=receipts&entity_name=${encodeURIComponent(projectName)}&entity_id=${receipt.value.id || 'new'}`, {
+      method: 'POST',
+      body: formData
+    });
+    uploadedImages.value = [...uploadedImages.value, ...response.files];
+  } catch (e) {
+    console.error('Upload error:', e);
+  } finally {
+    uploading.value = false;
+  }
+};
+
+const removeImage = (idx) => {
+  uploadedImages.value.splice(idx, 1);
 };
 </script>

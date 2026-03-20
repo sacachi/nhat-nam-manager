@@ -21,5 +21,12 @@ export default defineNuxtConfig({
   css: [
     'primeicons/primeicons.css',
     '~/assets/css/main.css'
-  ]
+  ],
+  runtimeConfig: {
+    googleClientId: process.env.GOOGLE_CLIENT_ID,
+    googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    googleRedirectUri: process.env.GOOGLE_REDIRECT_URI,
+    googleRefreshToken: process.env.GOOGLE_REFRESH_TOKEN,
+    googleDriveRootFolderId: process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID
+  }
 })

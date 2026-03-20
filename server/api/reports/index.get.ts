@@ -1,6 +1,8 @@
 import prisma from '~/server/utils/prisma'
+import { requireAdmin } from '~/server/utils/roles'
 
 export default defineEventHandler(async (event) => {
+  requireAdmin(event)
   // Aggregate by month for the current year
   const currentYear = new Date().getFullYear()
   

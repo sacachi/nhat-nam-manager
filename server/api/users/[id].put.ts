@@ -1,8 +1,8 @@
 import prisma from '~/server/utils/prisma'
-import { getAuthUser } from '~/server/utils/auth'
+import { requireAdmin } from '~/server/utils/roles'
 
 export default defineEventHandler(async (event) => {
-  const authUser = getAuthUser(event)
+  requireAdmin(event)
   const id = getRouterParam(event, 'id')
   if (!id) throw createError({ statusCode: 400, statusMessage: 'Missing ID' })
   
@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
 
     await prisma.activityLog.create({
         data: {
-          user_id: authUser.id,
+          user_id: event.context.user.id,
           action: 'update',
           entity: 'user',
           entity_id: user.id,

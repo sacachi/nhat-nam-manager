@@ -1,9 +1,9 @@
 import prisma from '~/server/utils/prisma'
 import bcrypt from 'bcryptjs'
-import { getAuthUser } from '~/server/utils/auth'
+import { requireAdmin } from '~/server/utils/roles'
 
 export default defineEventHandler(async (event) => {
-  const authUser = getAuthUser(event)
+  requireAdmin(event)
   const body = await readBody(event)
   
   try {
@@ -36,7 +36,7 @@ export default defineEventHandler(async (event) => {
 
     await prisma.activityLog.create({
       data: {
-        user_id: authUser.id,
+        user_id: event.context.user.id,
         action: 'create',
         entity: 'user',
         entity_id: user.id,

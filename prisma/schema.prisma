@@ -13,13 +13,18 @@ model User {
   username   String   @unique
   email      String   @unique
   password   String
-  role       String   @default("Staff") // "Admin", "Manager", "Staff"
+  role       String   @default("Staff") // "Admin", "Sale", "Design", "Construction"
   status     String   @default("active") // "active", "inactive"
   created_at DateTime @default(now())
 
-  activityLogs ActivityLog[]
-  receipts     Receipt[]
-  expenses     Expense[]
+  activityLogs   ActivityLog[]
+  receipts      Receipt[]
+  expenses      Expense[]
+  customerLeads CustomerLead[] @relation("UserLeads")
+  designerLeads CustomerLead[] @relation("DesignerLeads")
+  contracts     Contract[] @relation("UserContracts")
+  tasks        ProjectTask[] @relation("TaskAssignee")
+  notifications Notification[]
 }
 
 model Customer {
@@ -47,6 +52,8 @@ model Project {
   customer  Customer? @relation(fields: [customer_id], references: [id])
   receipts  Receipt[]
   expenses  Expense[]
+  contracts Contract[]
+  tasks     ProjectTask[]
 }
 
 model Receipt {
@@ -55,6 +62,7 @@ model Receipt {
   amount     Float
   date       DateTime @default(now())
   note       String?
+  images     String?
   created_by String
   created_at DateTime @default(now())
 
@@ -65,25 +73,107 @@ model Receipt {
 model Expense {
   id         String   @id @default(uuid())
   project_id String
+  task_id    String?
   type       String   // "material", "labor"
   amount     Float
   date       DateTime @default(now())
   note       String?
+  images     String?
   created_by String
   created_at DateTime @default(now())
 
-  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [created_by], references: [id])
+  project Project     @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  task    ProjectTask? @relation(fields: [task_id], references: [id], onDelete: SetNull)
+  user    User        @relation(fields: [created_by], references: [id])
 }
 
 model ActivityLog {
   id         String   @id @default(uuid())
   user_id    String
   action     String   // "create", "update", "delete"
-  entity     String   // "user", "project", "receipt", "expense", "customer"
+  entity     String   // "user", "project", "receipt", "expense", "customer", "customer_lead", "contract"
   entity_id  String
   old_data   String?  // JSON string
   new_data   String?  // JSON string
+  created_at DateTime @default(now())
+
+  user User @relation(fields: [user_id], references: [id])
+}
+
+model CustomerLead {
+  id                           String    @id @default(uuid())
+  sale_user_id                 String
+  customer_name                String
+  phone                        String
+  address                      String
+  construction_categories      String    // JSON array: ["Kitchen", "Wardrobe", ...]
+  construction_categories_other String?
+  description                  String
+  images                       String?
+  construction_value           Float
+  design_submission_date       DateTime?
+  designer_id                  String?
+  design_deadline              DateTime?
+  design_status                String    @default("not_assigned") // "not_assigned", "assigned", "in_progress", "review_requested", "approved", "rejected"
+  design_files                 String?
+  design_note                  String?
+  status                      String    @default("pending") // "pending", "reviewed", "converted", "rejected"
+  note                         String?
+  created_at                   DateTime  @default(now())
+  updated_at                   DateTime  @updatedAt
+
+  sale_user User  @relation("UserLeads", fields: [sale_user_id], references: [id])
+  designer  User? @relation("DesignerLeads", fields: [designer_id], references: [id])
+   tasks     ProjectTask[]
+}
+
+model Contract {
+  id            String   @id @default(uuid())
+  project_id    String
+  file_name     String
+  drive_file_id String
+  drive_url     String
+  file_type     String
+  file_size     Int
+  uploaded_by   String
+  note          String?
+  created_at    DateTime @default(now())
+
+  project Project @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  user    User    @relation("UserContracts", fields: [uploaded_by], references: [id])
+}
+
+model ProjectTask {
+  id          String    @id @default(uuid())
+  project_id  String?
+  lead_id     String?
+  title       String
+  description String?
+  type        String    // "design", "construction", "inspection", "other"
+  status      String    @default("pending") // "pending", "in_progress", "completed", "cancelled"
+  priority    String    @default("medium") // "low", "medium", "high", "urgent"
+  assignee_id String?
+  deadline    DateTime?
+  completed_at DateTime?
+  attachments String?   // JSON array of file objects
+  created_by  String
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+
+  project  Project?      @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  lead     CustomerLead? @relation(fields: [lead_id], references: [id], onDelete: Cascade)
+  assignee User?         @relation("TaskAssignee", fields: [assignee_id], references: [id])
+  expenses Expense[]
+}
+
+model Notification {
+  id         String   @id @default(uuid())
+  user_id    String
+  type       String   // "task_assigned", "task_overdue", "task_due_soon", "lead_assigned", "design_rejected", "design_approved", "lead_convertible"
+  title      String
+  message    String
+  link       String?
+  is_read    Boolean  @default(false)
   created_at DateTime @default(now())
 
   user User @relation(fields: [user_id], references: [id])

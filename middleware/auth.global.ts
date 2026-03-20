@@ -1,23 +1,45 @@
 export default defineNuxtRouteMiddleware(async (to, from) => {
-    // Không chạy middleware auth trên server trong lúc pre-render để tránh lỗi cookie
     if (import.meta.server) return;
 
     const { user, checkAuth } = useAuth();
     
-    // Nếu chưa load user (mới F5), gọi cookie để lấy user
     if (!user.value) {
         await checkAuth();
     }
 
     const isAuthenticated = !!user.value;
+    const role = user.value?.role;
 
-    // Chặn người lạ không đăng nhập
     if (!isAuthenticated && to.path !== '/login') {
         return navigateTo('/login');
     }
 
-    // Đã đăng nhập nhưng lại vào /login thì văng ra Dashboard
     if (isAuthenticated && to.path === '/login') {
         return navigateTo('/');
+    }
+
+    const restrictedRoutes = [
+        { path: '/task-management', allowed: ['Admin'] },
+        { path: '/receipts', allowed: ['Admin', 'Sale'] },
+        { path: '/expenses', allowed: ['Admin', 'Construction'] },
+        { path: '/reports', allowed: ['Admin'] },
+        { path: '/performance', allowed: ['Admin'] },
+        { path: '/users', allowed: ['Admin'] },
+        { path: '/logs', allowed: ['Admin'] },
+        { path: '/customer-leads', allowed: ['Admin', 'Sale'] },
+        { path: '/projects', allowed: ['Admin', 'Sale', 'Design', 'Construction'] },
+    ];
+
+    for (const route of restrictedRoutes) {
+        if (to.path.startsWith(route.path)) {
+            if (!route.allowed.includes(role)) {
+                return navigateTo('/');
+            }
+            break;
+        }
+    }
+
+    if (isAuthenticated && to.path === '/design-workspace') {
+        return navigateTo('/my-tasks');
     }
 });
