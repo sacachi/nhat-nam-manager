@@ -145,6 +145,81 @@
       </div>
     </div>
 
+    <!-- Inventory & Supplier Debt Widgets (Admin & Accounting only) -->
+    <div v-if="dashboardData.inventoryStats || dashboardData.supplierDebtStats" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Inventory Stats -->
+      <div v-if="dashboardData.inventoryStats" class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <i class="pi pi-box text-indigo-600"></i>
+            Kho Vật Tư
+          </h3>
+          <NuxtLink to="/materials" class="text-primary-600 text-sm hover:underline font-medium">Chi tiết →</NuxtLink>
+        </div>
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div class="p-4 bg-indigo-50 rounded-xl text-center">
+            <p class="text-2xl font-bold text-indigo-600">{{ dashboardData.inventoryStats.totalMaterials }}</p>
+            <p class="text-sm text-indigo-600/70">Loại vật tư</p>
+          </div>
+          <div class="p-4 bg-emerald-50 rounded-xl text-center">
+            <p class="text-lg font-bold text-emerald-600">{{ formatCurrency(dashboardData.inventoryStats.totalStockValue) }}</p>
+            <p class="text-sm text-emerald-600/70">Giá trị tồn kho</p>
+          </div>
+        </div>
+        <div v-if="dashboardData.inventoryStats.lowStockCount > 0" class="p-3 bg-red-50 rounded-lg border border-red-100">
+          <p class="text-sm text-red-600 font-medium flex items-center gap-2">
+            <i class="pi pi-exclamation-triangle"></i>
+            {{ dashboardData.inventoryStats.lowStockCount }} vật tư dưới mức tối thiểu
+          </p>
+          <div class="mt-2 space-y-1">
+            <div v-for="item in dashboardData.inventoryStats.lowStockMaterials" :key="item.id" class="flex justify-between text-xs">
+              <span class="text-slate-600">{{ item.name }}</span>
+              <span class="text-red-500 font-medium">{{ item.current_stock }} {{ item.unit }}</span>
+            </div>
+          </div>
+        </div>
+        <div v-else class="p-3 bg-green-50 rounded-lg border border-green-100">
+          <p class="text-sm text-green-600 font-medium flex items-center gap-2">
+            <i class="pi pi-check-circle"></i>
+            Tất cả vật tư đều đủ mức tồn kho
+          </p>
+        </div>
+      </div>
+
+      <!-- Supplier Debt Stats -->
+      <div v-if="dashboardData.supplierDebtStats" class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+            <i class="pi pi-wallet text-red-600"></i>
+            Công Nợ NCC
+          </h3>
+          <NuxtLink to="/supplier-debt" class="text-primary-600 text-sm hover:underline font-medium">Chi tiết →</NuxtLink>
+        </div>
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div class="p-4 bg-red-50 rounded-xl text-center">
+            <p class="text-2xl font-bold text-red-600">{{ formatCurrency(dashboardData.supplierDebtStats.totalDebt) }}</p>
+            <p class="text-sm text-red-600/70">Tổng công nợ</p>
+          </div>
+          <div class="p-4 bg-amber-50 rounded-xl text-center">
+            <p class="text-2xl font-bold text-amber-600">{{ dashboardData.supplierDebtStats.suppliersWithDebt }}/{{ dashboardData.supplierDebtStats.suppliersCount }}</p>
+            <p class="text-sm text-amber-600/70">NCC có công nợ</p>
+          </div>
+        </div>
+        <div v-if="dashboardData.supplierDebtStats.totalDebt > 0" class="p-3 bg-amber-50 rounded-lg border border-amber-100">
+          <p class="text-sm text-amber-600 font-medium">
+            <i class="pi pi-info-circle mr-1"></i>
+            Cần thanh toán công nợ cho {{ dashboardData.supplierDebtStats.suppliersWithDebt }} nhà cung cấp
+          </p>
+        </div>
+        <div v-else class="p-3 bg-green-50 rounded-lg border border-green-100">
+          <p class="text-sm text-green-600 font-medium flex items-center gap-2">
+            <i class="pi pi-check-circle"></i>
+            Không có công nợ NCC
+          </p>
+        </div>
+      </div>
+    </div>
+
     <!-- Recent Activity -->
     <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
       <div class="flex justify-between items-center mb-4">

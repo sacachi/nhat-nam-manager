@@ -78,6 +78,42 @@ export default defineEventHandler(async (event) => {
         take: 5
       })
 
+  // Inventory stats for Admin and Accounting
+  let inventoryStats = null
+  if (['Admin', 'Accounting'].includes(user.role)) {
+    const materials = await prisma.material.findMany({
+      select: { id: true, name: true, current_stock: true, min_stock_level: true, unit: true, stock_value: true }
+    })
+    const totalMaterials = materials.length
+    const totalStockValue = materials.reduce((sum, m) => sum + (m.stock_value || 0), 0)
+    const lowStockMaterials = materials.filter(m => m.current_stock <= m.min_stock_level)
+    inventoryStats = {
+      totalMaterials,
+      totalStockValue,
+      lowStockCount: lowStockMaterials.length,
+      lowStockMaterials: lowStockMaterials.slice(0, 5).map(m => ({
+        id: m.id,
+        name: m.name,
+        current_stock: m.current_stock,
+        min_stock_level: m.min_stock_level,
+        unit: m.unit
+      }))
+    }
+  }
+
+  // Supplier debt for Admin and Accounting
+  let supplierDebtStats = null
+  if (['Admin', 'Accounting'].includes(user.role)) {
+    const suppliers = await prisma.supplier.findMany({ select: { debt: true } })
+    const totalDebt = suppliers.reduce((sum, s) => sum + (s.debt || 0), 0)
+    const suppliersWithDebt = suppliers.filter(s => s.debt > 0).length
+    supplierDebtStats = {
+      totalDebt,
+      suppliersWithDebt,
+      suppliersCount: suppliers.length
+    }
+  }
+
   return {
     role: user.role,
     projects: projectsCount,
@@ -101,6 +137,8 @@ export default defineEventHandler(async (event) => {
     recentLogs: recentLogs.map(({ user, ...log }) => ({
       ...log,
       user_name: user?.name || log.user_id
-    }))
+    })),
+    inventoryStats,
+    supplierDebtStats
   }
 })

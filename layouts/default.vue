@@ -1,5 +1,7 @@
 <template>
   <div class="min-h-screen bg-slate-50 flex flex-col md:flex-row font-sans">
+    <Toast position="top-right" />
+
     <!-- Sidebar -->
     <aside class="w-full md:w-64 bg-slate-950 text-slate-300 flex-shrink-0 flex flex-col shadow-xl">
       <div class="p-6 border-b border-slate-800/50">
@@ -135,7 +137,8 @@ import { useRoute } from 'vue-router';
 const route = useRoute();
 
 const openMenus = ref({
-  tasks: route.path.startsWith('/my-tasks') || route.path.startsWith('/task-management')
+  tasks: route.path.startsWith('/my-tasks') || route.path.startsWith('/task-management'),
+  inventory: route.path.startsWith('/materials') || route.path.startsWith('/suppliers') || route.path.startsWith('/stock-in') || route.path.startsWith('/stock-out') || route.path.startsWith('/supplier-debt')
 })
 
 const toggleMenu = (key) => {
@@ -162,6 +165,19 @@ const menuItems = computed(() => {
     },
     { key: 'receipts', label: 'Thu tiền', icon: 'pi pi-wallet', route: '/receipts', roles: ['Admin', 'Sale'] },
     { key: 'expenses', label: 'Chi phí', icon: 'pi pi-credit-card', route: '/expenses', roles: ['Admin', 'Construction'] },
+    {
+      key: 'inventory',
+      label: 'Kho Vật Tư',
+      icon: 'pi pi-box',
+      roles: ['Admin', 'Accounting'],
+      children: [
+        { label: 'Vật tư', icon: 'pi pi-database', route: '/materials', roles: ['Admin', 'Accounting'] },
+        { label: 'Nhà cung cấp', icon: 'pi pi-shop', route: '/suppliers', roles: ['Admin', 'Accounting'] },
+        { label: 'Nhập kho', icon: 'pi pi-arrow-down', route: '/stock-in', roles: ['Admin', 'Accounting'] },
+        { label: 'Xuất kho', icon: 'pi pi-arrow-up', route: '/stock-out', roles: ['Admin', 'Accounting'] },
+        { label: 'Công nợ NCC', icon: 'pi pi-wallet', route: '/supplier-debt', roles: ['Admin', 'Accounting'] }
+      ]
+    },
     { key: 'reports', label: 'BC Tài chính', icon: 'pi pi-chart-pie', route: '/reports', roles: ['Admin'] },
     { key: 'performance', label: 'BC Hiệu suất', icon: 'pi pi-chart-bar', route: '/performance', roles: ['Admin'] },
     { key: 'users', label: 'Nhân viên', icon: 'pi pi-users', route: '/users', roles: ['Admin'] },

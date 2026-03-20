@@ -282,6 +282,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import { ensureAcceptedResponseStatus, getRequestErrorMessage } from '~/utils/request-feedback'
 
 const toast = useToast()
 const { user: currentUser } = useAuth()
@@ -347,6 +348,22 @@ const selectedCategories = ref([])
 const uploadedImages = ref([])
 const tempFolderId = ref(null)
 const selectedLead = ref(null)
+
+const fetchWithLeadToast = async (url, options = {}, fallbackMessage = 'Yêu cầu thất bại') => {
+  try {
+    const response = await $fetch.raw(url, options)
+    ensureAcceptedResponseStatus(response.status)
+    return response._data
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Lỗi',
+      detail: getRequestErrorMessage(error, fallbackMessage),
+      life: 5000
+    })
+    throw error
+  }
+}
 
 const { data: leads, refresh } = await useFetch('/api/customer-leads', { default: () => [] })
 
@@ -443,10 +460,10 @@ const onFileSelect = async (event) => {
 
     const leadName = lead.value.customer_name || 'temp'
     const leadId = lead.value.id || `temp-${Date.now()}`
-    const response = await $fetch(`/api/customer-leads/upload-images?lead_name=${encodeURIComponent(leadName)}&lead_id=${leadId}`, {
+    const response = await fetchWithLeadToast(`/api/customer-leads/upload-images?lead_name=${encodeURIComponent(leadName)}&lead_id=${leadId}`, {
       method: 'POST',
       body: formData
-    })
+    }, 'Tải ảnh thất bại')
 
     uploadedImages.value = [...uploadedImages.value, ...response.files]
     tempFolderId.value = response.folderId
@@ -474,7 +491,7 @@ const hideDialog = () => {
 
 const viewLead = async (data) => {
   try {
-    selectedLead.value = await $fetch(`/api/customer-leads/${data.id}`)
+    selectedLead.value = await fetchWithLeadToast(`/api/customer-leads/${data.id}`, {}, 'Không thể tải chi tiết lead')
     reviewNote.value = selectedLead.value.note || ''
     detailDialog.value = true
   } catch (e) {
@@ -508,9 +525,9 @@ const saveLead = async () => {
     }
 
     if (lead.value.id) {
-      await $fetch(`/api/customer-leads/${lead.value.id}`, { method: 'PUT', body: payload })
+      await fetchWithLeadToast(`/api/customer-leads/${lead.value.id}`, { method: 'PUT', body: payload }, 'Lưu thất bại')
     } else {
-      await $fetch('/api/customer-leads', { method: 'POST', body: payload })
+      await fetchWithLeadToast('/api/customer-leads', { method: 'POST', body: payload }, 'Lưu thất bại')
     }
 
     await refresh()
@@ -518,7 +535,6 @@ const saveLead = async () => {
     toast.add({ severity: 'success', summary: 'Thành công', detail: 'Lưu phiếu thành công', life: 3000 })
   } catch (e) {
     console.error('Save error:', e)
-    toast.add({ severity: 'error', summary: 'Lỗi', detail: e.data?.message || 'Lưu thất bại', life: 5000 })
   } finally {
     saving.value = false
   }
@@ -527,26 +543,25 @@ const saveLead = async () => {
 const updateStatus = async (status) => {
   if (!selectedLead.value) return
   try {
-    await $fetch(`/api/customer-leads/${selectedLead.value.id}`, {
+    await fetchWithLeadToast(`/api/customer-leads/${selectedLead.value.id}`, {
       method: 'PUT',
       body: { status, note: reviewNote.value }
-    })
+    }, 'Cập nhật thất bại')
     await refresh()
     selectedLead.value = { ...selectedLead.value, status, note: reviewNote.value }
     toast.add({ severity: 'success', summary: 'Thành công', detail: 'Cập nhật trạng thái thành công', life: 3000 })
   } catch (e) {
     console.error('Update status error:', e)
-    toast.add({ severity: 'error', summary: 'Lỗi', detail: e.data?.message || 'Cập nhật thất bại', life: 5000 })
   }
 }
 
 const saveNote = async () => {
   if (!selectedLead.value) return
   try {
-    await $fetch(`/api/customer-leads/${selectedLead.value.id}`, {
+    await fetchWithLeadToast(`/api/customer-leads/${selectedLead.value.id}`, {
       method: 'PUT',
       body: { note: reviewNote.value }
-    })
+    }, 'Lưu ghi chú thất bại')
     selectedLead.value = { ...selectedLead.value, note: reviewNote.value }
   } catch (e) {
     console.error('Save note error:', e)
@@ -562,9 +577,9 @@ const convertLead = async () => {
   
   saving.value = true
   try {
-    const result = await $fetch(`/api/customer-leads/${selectedLead.value.id}/convert`, {
+    const result = await fetchWithLeadToast(`/api/customer-leads/${selectedLead.value.id}/convert`, {
       method: 'POST'
-    })
+    }, 'Chuyển đổi thất bại')
     
     await refresh()
     selectedLead.value = { ...selectedLead.value, status: 'converted' }
@@ -578,7 +593,6 @@ const convertLead = async () => {
     })
   } catch (e) {
     console.error('Convert error:', e)
-    toast.add({ severity: 'error', summary: 'Lỗi', detail: e.data?.message || 'Chuyển đổi thất bại', life: 5000 })
   } finally {
     saving.value = false
   }
@@ -589,13 +603,13 @@ const assignDesigner = async () => {
   
   saving.value = true
   try {
-    const result = await $fetch(`/api/customer-leads/${selectedLead.value.id}/assign`, {
+    const result = await fetchWithLeadToast(`/api/customer-leads/${selectedLead.value.id}/assign`, {
       method: 'POST',
       body: {
         designer_id: selectedDesignerId.value,
         design_deadline: designDeadline.value
       }
-    })
+    }, 'Giao designer thất bại')
     
     await refresh()
     selectedLead.value = { ...selectedLead.value, ...result }
@@ -605,7 +619,6 @@ const assignDesigner = async () => {
     toast.add({ severity: 'success', summary: 'Thành công', detail: 'Đã giao designer', life: 3000 })
   } catch (e) {
     console.error('Assign designer error:', e)
-    toast.add({ severity: 'error', summary: 'Lỗi', detail: e.data?.message || 'Giao designer thất bại', life: 5000 })
   } finally {
     saving.value = false
   }
@@ -616,13 +629,13 @@ const updateDesignStatus = async () => {
   
   saving.value = true
   try {
-    const result = await $fetch(`/api/customer-leads/${selectedLead.value.id}/design-status`, {
+    const result = await fetchWithLeadToast(`/api/customer-leads/${selectedLead.value.id}/design-status`, {
       method: 'PUT',
       body: {
         design_status: selectedDesignStatus.value,
         design_note: designNote.value
       }
-    })
+    }, 'Cập nhật thất bại')
     
     await refresh()
     selectedLead.value = { ...selectedLead.value, ...result }
@@ -632,7 +645,6 @@ const updateDesignStatus = async () => {
     toast.add({ severity: 'success', summary: 'Thành công', detail: 'Cập nhật trạng thái thiết kế', life: 3000 })
   } catch (e) {
     console.error('Update design status error:', e)
-    toast.add({ severity: 'error', summary: 'Lỗi', detail: e.data?.message || 'Cập nhật thất bại', life: 5000 })
   } finally {
     saving.value = false
   }

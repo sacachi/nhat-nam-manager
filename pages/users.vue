@@ -8,8 +8,13 @@
             <InputText v-model="searchQuery" placeholder="Tìm kiếm nhân sự..." class="w-full pl-10" />
         </IconField>
       </div>
-      <Button icon="pi pi-user-plus" label="Thêm Nhân Sự" class="w-full sm:w-auto p-button-primary shadow-sm" @click="openNew" />
+      <div class="flex gap-2 w-full sm:w-auto">
+        <Button icon="pi pi-file-excel" label="Thêm hàng loạt" class="p-button-success" outlined @click="bulkImportVisible = true" />
+        <Button icon="pi pi-user-plus" label="Thêm Nhân Sự" class="p-button-primary shadow-sm" @click="openNew" />
+      </div>
     </div>
+
+    <BulkImportDialog v-model="bulkImportVisible" entityLabel="Nhân Sự" apiEndpoint="/api/users" :columns="bulkColumns" @imported="refresh" />
 
     <!-- Data Table -->
     <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4">
@@ -107,6 +112,23 @@ const loading = ref(false);
 const submitted = ref(false);
 const userDialog = ref(false);
 const dialogTitle = ref('Tài khoản Nhân sự');
+const bulkImportVisible = ref(false);
+
+const roleOptions = [
+    { label: 'Admin', value: 'Admin' },
+    { label: 'Sale', value: 'Sale' },
+    { label: 'Design', value: 'Design' },
+    { label: 'Thi công', value: 'Construction' },
+    { label: 'Kế toán', value: 'Accounting' }
+];
+
+const bulkColumns = [
+  { field: 'name', header: 'Họ tên', required: true, width: '180px', excelFields: ['Tên', 'Họ tên', 'name'] },
+  { field: 'username', header: 'Tên đăng nhập', required: true, width: '150px', excelFields: ['Username', 'Tên đăng nhập', 'Tài khoản', 'username'] },
+  { field: 'email', header: 'Email', required: true, width: '200px', excelFields: ['email', 'Email'] },
+  { field: 'password', header: 'Mật khẩu', required: true, width: '150px', excelFields: ['Mật khẩu', 'password', 'Password'] },
+  { field: 'role', header: 'Phân quyền', type: 'select', options: roleOptions, width: '140px', excelFields: ['Quyền', 'Role', 'role'] }
+];
 
 const emptyUser = {
     id: null,

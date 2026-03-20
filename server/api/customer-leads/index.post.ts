@@ -14,14 +14,10 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  if (!validatePhone(body.phone)) {
-    throw createError({ statusCode: 400, statusMessage: 'Số điện thoại không hợp lệ' })
-  }
+  validatePhone(body.phone)
 
   const constructionValue = parseFloat(body.construction_value)
-  if (!validatePositiveNumber(constructionValue)) {
-    throw createError({ statusCode: 400, statusMessage: 'Giá trị công trình phải lớn hơn 0' })
-  }
+  validatePositiveNumber(constructionValue, 'Giá trị công trình')
 
   let categories: string[] = []
   try {

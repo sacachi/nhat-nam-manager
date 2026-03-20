@@ -375,7 +375,7 @@ const saveTask = async () => {
     showTaskDialog.value = false
     toast.add({ severity: 'success', summary: 'Thành công', detail: 'Lưu công việc', life: 3000 })
   } catch (e) {
-    toast.add({ severity: 'error', summary: 'Lỗi', detail: e.data?.message || 'Lưu thất bại', life: 5000 })
+    toast.add({ severity: 'error', summary: 'Lỗi', detail: e.data?.message || e.message || 'Lưu thất bại', life: 5000 })
   } finally {
     saving.value = false
   }
@@ -387,7 +387,7 @@ const updateStatus = async (task, newStatus) => {
     await refresh()
     toast.add({ severity: 'success', summary: 'Thành công', detail: 'Cập nhật trạng thái', life: 3000 })
   } catch (e) {
-    toast.add({ severity: 'error', summary: 'Lỗi', detail: e.data?.message || 'Cập nhật thất bại', life: 5000 })
+    toast.add({ severity: 'error', summary: 'Lỗi', detail: e.data?.message || e.message || 'Cập nhật thất bại', life: 5000 })
   }
 }
 
@@ -403,7 +403,7 @@ const confirmDelete = (task) => {
         await refresh()
         toast.add({ severity: 'success', summary: 'Thành công', detail: 'Đã xóa công việc', life: 3000 })
       } catch (e) {
-        toast.add({ severity: 'error', summary: 'Lỗi', detail: e.data?.message || 'Xóa thất bại', life: 5000 })
+        toast.add({ severity: 'error', summary: 'Lỗi', detail: e.data?.message || e.message || 'Xóa thất bại', life: 5000 })
       }
     }
   })
@@ -426,7 +426,7 @@ const confirmBulkDelete = () => {
         await refresh()
         toast.add({ severity: 'success', summary: 'Thành công', detail: 'Đã xóa các công việc', life: 3000 })
       } catch (e) {
-        toast.add({ severity: 'error', summary: 'Lỗi', detail: e.data?.message || 'Xóa thất bại', life: 5000 })
+        toast.add({ severity: 'error', summary: 'Lỗi', detail: e.data?.message || e.message || 'Xóa thất bại', life: 5000 })
       } finally {
         bulkSaving.value = false
       }
@@ -468,7 +468,7 @@ const executeBulkUpdate = async (action) => {
     await refresh()
     toast.add({ severity: 'success', summary: 'Thành công', detail: 'Cập nhật hàng loạt thành công', life: 3000 })
   } catch (e) {
-    toast.add({ severity: 'error', summary: 'Lỗi', detail: e.data?.message || 'Cập nhật thất bại', life: 5000 })
+    toast.add({ severity: 'error', summary: 'Lỗi', detail: e.data?.message || e.message || 'Cập nhật thất bại', life: 5000 })
   } finally {
     bulkSaving.value = false
   }

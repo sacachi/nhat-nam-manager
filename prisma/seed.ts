@@ -62,6 +62,18 @@ async function main() {
   }
   console.log('✓ Construction users:', constructionUsers.length)
 
+  const accountingUsers = [
+    { name: 'Phan Văn Kế toán', username: 'accounting_1', email: 'accounting1@nhatnam.vn' },
+  ]
+  for (const u of accountingUsers) {
+    await prisma.user.upsert({
+      where: { username: u.username },
+      update: { role: 'Accounting' },
+      create: { ...u, password: hashedPassword, role: 'Accounting', status: 'active' }
+    })
+  }
+  console.log('✓ Accounting users:', accountingUsers.length)
+
   console.log('\n========== SEEDING CUSTOMERS ==========')
 
   const customers = [
@@ -374,12 +386,154 @@ async function main() {
   }
   console.log('✓ Activity Logs:', logCount)
 
+  console.log('\n========== SEEDING SUPPLIERS ==========')
+
+  const suppliers = [
+    { code: 'NCC001', name: 'Công ty TNHH Gỗ An Phú', phone: '02812345678', email: 'contact@anphuwood.vn', address: '123 Đường CN 5, KCN Tân Bình, TP.HCM', note: 'Liên hệ: Nguyễn Văn Phú' },
+    { code: 'NCC002', name: 'Ván ép Hoàng Gia', phone: '02823456789', email: 'info@hoanggiavenep.vn', address: '456 Đường CN 7, KCN Bình Chiểu, TP.HCM', note: 'Liên hệ: Trần Thị Hoa' },
+    { code: 'NCC003', name: 'Sơn công nghiệp Thanh Sơn', phone: '02834567890', email: 'sonthanhtoan@gmail.com', address: '789 Đường Lê Văn Việt, Quận 9, TP.HCM', note: 'Liên hệ: Lê Văn Sơn' },
+    { code: 'NCC004', name: 'Phụ kiện nội thất Phú Thịnh', phone: '02845678901', email: 'phuthinh.pk@gmail.com', address: '321 Đường Số 1, KCN Hiệp Bình Phước, TP.HCM', note: 'Liên hệ: Phạm Văn Thịnh' },
+    { code: 'NCC005', name: 'Tấm laminate Hùng Phát', phone: '02856789012', email: 'hungphatlaminate@yahoo.com', address: '654 Đường CN 3, KCN Vĩnh Lộc, TP.HCM', note: 'Liên hệ: Đặng Văn Phát' },
+  ]
+
+  for (const s of suppliers) {
+    await prisma.supplier.upsert({
+      where: { code: s.code },
+      update: { name: s.name, phone: s.phone, email: s.email, address: s.address, note: s.note },
+      create: { ...s }
+    })
+  }
+  console.log('✓ Suppliers:', suppliers.length)
+
+  console.log('\n========== SEEDING MATERIALS ==========')
+
+  const materials = [
+    { code: 'VT001', name: 'Gỗ MDF phủ melamine', unit: 'Tấm', min_stock_level: 50, description: '1220x2440x18mm - Gỗ MDF phủ melamine trắng, chống ẩm' },
+    { code: 'VT002', name: 'Gỗ MDF phủ veneer', unit: 'Tấm', min_stock_level: 30, description: '1220x2440x18mm - Gỗ MDF phủ veneer sồi tự nhiên' },
+    { code: 'VT003', name: 'Gỗ Plywood', unit: 'Tấm', min_stock_level: 20, description: '1220x2440x12mm - Gỗ Plywood chịu lực tốt' },
+    { code: 'VT004', name: 'Tấm HDF', unit: 'Tấm', min_stock_level: 15, description: '1220x2440x6mm - Tấm HDF lót sàn' },
+    { code: 'VT005', name: 'Lamington trắng', unit: 'Thanh', min_stock_level: 100, description: '3000x100x18mm - Lamington trắng pure' },
+    { code: 'VT006', name: 'Lamington vân gỗ', unit: 'Thanh', min_stock_level: 80, description: '3000x100x18mm - Lamington vân sồi' },
+    { code: 'VT007', name: 'Ray trượt ngăn kéo', unit: 'Bộ', min_stock_level: 50, description: '500mm - Ray trượt Blum soft close' },
+    { code: 'VT008', name: 'Bản lề cửa', unit: 'Cái', min_stock_level: 100, description: '35mm - Bản lề giảm chấn' },
+    { code: 'VT009', name: 'Tay nắm cửa', unit: 'Cái', min_stock_level: 80, description: '160mm - Tay nắm Inox304' },
+    { code: 'VT010', name: 'Sơn lót PU', unit: 'Thùng', min_stock_level: 10, description: '5kg/thùng - Sơn lót PU hệ nước' },
+    { code: 'VT011', name: 'Sơn hoàn thiện PU', unit: 'Thùng', min_stock_level: 10, description: '5kg/thùng - Sơn hoàn thiện PU bóng' },
+    { code: 'VT012', name: 'Sơn màu NC', unit: 'Thùng', min_stock_level: 5, description: '2.5kg/thùng - Sơn màu NC trắng' },
+    { code: 'VT013', name: 'Bạt giấy mịn', unit: 'Kg', min_stock_level: 20, description: '280# - Bạt giấy mịn cho sơn NC' },
+    { code: 'VT014', name: 'Dung môi NC', unit: 'Lít', min_stock_level: 30, description: 'Dung môi pha sơn NC' },
+    { code: 'VT015', name: 'Bông vải', unit: 'Kg', min_stock_level: 10, description: 'Bông vải đánh bóng gỗ' },
+  ]
+
+  for (const m of materials) {
+    const stock = Math.floor(Math.random() * 200) + 20
+    const avgCost = Math.floor(Math.random() * 500000) + 100000
+    await prisma.material.upsert({
+      where: { code: m.code },
+      update: { name: m.name, unit: m.unit, min_stock_level: m.min_stock_level, description: m.description },
+      create: {
+        ...m,
+        current_stock: stock,
+        avg_cost: avgCost,
+        stock_value: stock * avgCost
+      }
+    })
+  }
+  console.log('✓ Materials:', materials.length)
+
+  console.log('\n========== SEEDING STOCK IN ==========')
+
+  const existingStockIns = await prisma.stockIn.count()
+  if (existingStockIns > 0) {
+    console.log('  Stock Ins already exist, skipping...')
+  } else {
+    const dbMaterials = await prisma.material.findMany()
+    const dbSuppliers = await prisma.supplier.findMany()
+
+    const stockInData = [
+      { supplier_idx: 0, items: [{ mat_idx: 0, qty: 20, price: 350000 }, { mat_idx: 1, qty: 10, price: 420000 }] },
+      { supplier_idx: 1, items: [{ mat_idx: 2, qty: 15, price: 280000 }, { mat_idx: 3, qty: 8, price: 180000 }] },
+      { supplier_idx: 2, items: [{ mat_idx: 9, qty: 5, price: 450000 }, { mat_idx: 10, qty: 5, price: 520000 }] },
+    ]
+
+    let stockInCount = 0
+    for (let i = 0; i < stockInData.length; i++) {
+      const si = stockInData[i]
+      const supplier = dbSuppliers[si.supplier_idx]
+      if (!supplier) continue
+
+      const totalAmount = si.items.reduce((sum, item) => {
+        const mat = dbMaterials[item.mat_idx]
+        return sum + (item.qty * item.price)
+      }, 0)
+
+      const stockIn = await prisma.stockIn.create({
+        data: {
+          code: `PNK${String(i + 1).padStart(5, '0')}`,
+          supplier_id: supplier.id,
+          date: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
+          total_amount: totalAmount,
+          paid_amount: Math.floor(totalAmount * 0.3),
+          note: 'Nhập kho ban đầu',
+          created_by: admin.id
+        }
+      })
+
+      for (const item of si.items) {
+        const mat = dbMaterials[item.mat_idx]
+        if (!mat) continue
+
+        await prisma.stockInItem.create({
+          data: {
+            stock_in_id: stockIn.id,
+            material_id: mat.id,
+            quantity: item.qty,
+            unit_price: item.price,
+            total_price: item.qty * item.price,
+            avg_cost_before: mat.avg_cost,
+            avg_cost_after: item.price
+          }
+        })
+
+        await prisma.material.update({
+          where: { id: mat.id },
+          data: {
+            current_stock: mat.current_stock + item.qty,
+            avg_cost: item.price,
+            stock_value: (mat.current_stock + item.qty) * item.price
+          }
+        })
+
+        await prisma.stockLog.create({
+          data: {
+            material_id: mat.id,
+            type: 'IN',
+            reference_id: stockIn.id,
+            reference_code: stockIn.code,
+            quantity: item.qty,
+            unit_price: item.price,
+            stock_before: mat.current_stock,
+            stock_after: mat.current_stock + item.qty,
+            avg_cost_before: mat.avg_cost,
+            avg_cost_after: item.price,
+            value_before: mat.current_stock * mat.avg_cost,
+            value_after: (mat.current_stock + item.qty) * item.price
+          }
+        })
+      }
+
+      stockInCount++
+    }
+    console.log('✓ Stock Ins:', stockInCount)
+  }
+
   console.log('\n========== SEED COMPLETE ==========')
   console.log('Login credentials:')
   console.log('  Admin: admin /', password)
   console.log('  Sale: sale_1 /', password)
   console.log('  Design: design_1 /', password)
   console.log('  Construction: construction_1 /', password)
+  console.log('  Accounting: accounting_1 /', password)
 }
 
 main()

@@ -317,7 +317,7 @@ const uploadDesignFiles = async () => {
     toast.add({ severity: 'success', summary: 'Thành công', detail: `Đã upload ${result.files.length} files`, life: 3000 })
   } catch (e) {
     console.error('Upload error:', e)
-    toast.add({ severity: 'error', summary: 'Lỗi', detail: e.data?.message || 'Upload thất bại', life: 5000 })
+    toast.add({ severity: 'error', summary: 'Lỗi', detail: e.data?.message || e.message || 'Upload thất bại', life: 5000 })
   } finally {
     uploading.value = false
   }
@@ -332,7 +332,7 @@ const updateStatus = async (lead, status) => {
     await refresh()
     toast.add({ severity: 'success', summary: 'Thành công', detail: 'Cập nhật trạng thái', life: 3000 })
   } catch (e) {
-    toast.add({ severity: 'error', summary: 'Lỗi', detail: e.data?.message || 'Cập nhật thất bại', life: 5000 })
+    toast.add({ severity: 'error', summary: 'Lỗi', detail: e.data?.message || e.message || 'Cập nhật thất bại', life: 5000 })
   }
 }
 
@@ -348,7 +348,7 @@ const requestReview = async (lead) => {
     }
     toast.add({ severity: 'success', summary: 'Thành công', detail: 'Đã gửi yêu cầu duyệt', life: 3000 })
   } catch (e) {
-    toast.add({ severity: 'error', summary: 'Lỗi', detail: e.data?.message || 'Thất bại', life: 5000 })
+    toast.add({ severity: 'error', summary: 'Lỗi', detail: e.data?.message || e.message || 'Thất bại', life: 5000 })
   }
 }
 
@@ -372,7 +372,7 @@ const updateDesignStatus = async () => {
     newDesignStatus.value = null
     toast.add({ severity: 'success', summary: 'Thành công', detail: 'Cập nhật trạng thái', life: 3000 })
   } catch (e) {
-    toast.add({ severity: 'error', summary: 'Lỗi', detail: e.data?.message || 'Cập nhật thất bại', life: 5000 })
+    toast.add({ severity: 'error', summary: 'Lỗi', detail: e.data?.message || e.message || 'Cập nhật thất bại', life: 5000 })
   } finally {
     saving.value = false
   }

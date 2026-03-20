@@ -8,8 +8,13 @@
             <InputText v-model="searchQuery" placeholder="Tìm kiếm khách hàng..." class="w-full pl-10" />
         </IconField>
       </div>
-      <Button icon="pi pi-user-plus" label="Thêm Khách Hàng" class="w-full sm:w-auto p-button-primary shadow-sm" @click="openNew" />
+      <div class="flex gap-2 w-full sm:w-auto">
+        <Button icon="pi pi-file-excel" label="Thêm hàng loạt" class="p-button-success" outlined @click="bulkImportVisible = true" />
+        <Button icon="pi pi-user-plus" label="Thêm Khách Hàng" class="p-button-primary shadow-sm" @click="openNew" />
+      </div>
     </div>
+
+    <BulkImportDialog v-model="bulkImportVisible" entityLabel="Khách Hàng" apiEndpoint="/api/customers" :columns="bulkColumns" @imported="refresh" />
 
     <!-- Data Table -->
     <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4">
@@ -107,6 +112,15 @@ const loading = ref(false);
 const submitted = ref(false);
 const customerDialog = ref(false);
 const dialogTitle = ref('Khách hàng');
+const bulkImportVisible = ref(false);
+
+const bulkColumns = [
+  { field: 'name', header: 'Tên khách hàng', required: true, width: '200px', excelFields: ['Tên', 'Tên KH', 'Họ tên', 'name'] },
+  { field: 'phone', header: 'Số điện thoại', width: '140px', excelFields: ['SĐT', 'Điện thoại', 'phone'] },
+  { field: 'email', header: 'Email', width: '180px', excelFields: ['email', 'Email'] },
+  { field: 'address', header: 'Địa chỉ', width: '220px', excelFields: ['Địa chỉ', 'address'] },
+  { field: 'note', header: 'Ghi chú', width: '180px', excelFields: ['Ghi chú', 'note'] }
+];
 
 const isPhoneMasked = (phone) => {
   return phone && phone.includes('*')

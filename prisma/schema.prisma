@@ -13,18 +13,21 @@ model User {
   username   String   @unique
   email      String   @unique
   password   String
-  role       String   @default("Staff") // "Admin", "Sale", "Design", "Construction"
+  role       String   @default("Staff") // "Admin", "Accounting", "Sale", "Design", "Construction"
   status     String   @default("active") // "active", "inactive"
   created_at DateTime @default(now())
 
-  activityLogs   ActivityLog[]
-  receipts      Receipt[]
-  expenses      Expense[]
-  customerLeads CustomerLead[] @relation("UserLeads")
-  designerLeads CustomerLead[] @relation("DesignerLeads")
-  contracts     Contract[] @relation("UserContracts")
-  tasks        ProjectTask[] @relation("TaskAssignee")
-  notifications Notification[]
+  activityLogs    ActivityLog[]
+  receipts        Receipt[]
+  expenses        Expense[]
+  customerLeads   CustomerLead[] @relation("UserLeads")
+  designerLeads   CustomerLead[] @relation("DesignerLeads")
+  contracts       Contract[] @relation("UserContracts")
+  tasks           ProjectTask[] @relation("TaskAssignee")
+  notifications   Notification[]
+  stockIns        StockIn[] @relation("StockInCreator")
+  stockOuts      StockOut[] @relation("StockOutCreator")
+  supplierPayments SupplierPayment[] @relation("SupplierPaymentCreator")
 }
 
 model Customer {
@@ -54,6 +57,7 @@ model Project {
   expenses  Expense[]
   contracts Contract[]
   tasks     ProjectTask[]
+  stockOuts StockOut[]
 }
 
 model Receipt {
@@ -82,9 +86,10 @@ model Expense {
   created_by String
   created_at DateTime @default(now())
 
-  project Project     @relation(fields: [project_id], references: [id], onDelete: Cascade)
-  task    ProjectTask? @relation(fields: [task_id], references: [id], onDelete: SetNull)
-  user    User        @relation(fields: [created_by], references: [id])
+  project  Project    @relation(fields: [project_id], references: [id], onDelete: Cascade)
+  task     ProjectTask? @relation(fields: [task_id], references: [id], onDelete: SetNull)
+  user     User       @relation(fields: [created_by], references: [id])
+  stockOut StockOut?
 }
 
 model ActivityLog {
@@ -177,4 +182,132 @@ model Notification {
   created_at DateTime @default(now())
 
   user User @relation(fields: [user_id], references: [id])
+}
+
+model Supplier {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  name        String
+  phone       String?
+  email       String?
+  address     String?
+  tax_code    String?
+  note        String?
+  status      String   @default("active")
+  created_at  DateTime @default(now())
+
+  stockIns         StockIn[]
+  supplierPayments SupplierPayment[]
+}
+
+model Material {
+  id               String   @id @default(uuid())
+  code             String   @unique
+  name             String
+  unit             String
+  standard_price   Float    @default(0)
+  current_stock   Float    @default(0)
+  avg_cost         Float    @default(0)
+  stock_value     Float    @default(0)
+  min_stock_level Float    @default(0)
+  description     String?
+  status          String   @default("active")
+  created_at      DateTime @default(now())
+
+  stockInItems  StockInItem[]
+  stockOutItems StockOutItem[]
+  stockLogs     StockLog[]
+}
+
+model StockIn {
+  id           String   @id @default(uuid())
+  code         String   @unique
+  supplier_id  String
+  date         DateTime @default(now())
+  total_amount Float    @default(0)
+  paid_amount  Float    @default(0)
+  note         String?
+  images       String?
+  created_by   String
+  created_at   DateTime @default(now())
+
+  supplier Supplier     @relation(fields: [supplier_id], references: [id])
+  items    StockInItem[]
+  user    User         @relation("StockInCreator", fields: [created_by], references: [id])
+}
+
+model StockInItem {
+  id              String  @id @default(uuid())
+  stock_in_id     String
+  material_id     String
+  quantity        Float
+  unit_price      Float
+  total_price     Float
+  avg_cost_before Float   @default(0)
+  avg_cost_after  Float   @default(0)
+
+  stockIn  StockIn  @relation(fields: [stock_in_id], references: [id], onDelete: Cascade)
+  material Material @relation(fields: [material_id], references: [id])
+}
+
+model StockOut {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  project_id  String
+  date        DateTime @default(now())
+  total_cost  Float    @default(0)
+  note        String?
+  expense_id  String?  @unique
+  created_by  String
+  created_at  DateTime @default(now())
+
+  project Project       @relation(fields: [project_id], references: [id])
+  items   StockOutItem[]
+  expense Expense?      @relation(fields: [expense_id], references: [id])
+  user    User         @relation("StockOutCreator", fields: [created_by], references: [id])
+}
+
+model StockOutItem {
+  id           String  @id @default(uuid())
+  stock_out_id String
+  material_id  String
+  quantity     Float
+  unit_cost    Float
+  total_cost   Float
+
+  stockOut StockOut @relation(fields: [stock_out_id], references: [id], onDelete: Cascade)
+  material Material  @relation(fields: [material_id], references: [id])
+}
+
+model SupplierPayment {
+  id          String   @id @default(uuid())
+  supplier_id String
+  amount      Float
+  date        DateTime @default(now())
+  note        String?
+  images      String?
+  created_by  String
+  created_at  DateTime @default(now())
+
+  supplier Supplier @relation(fields: [supplier_id], references: [id])
+  user     User     @relation("SupplierPaymentCreator", fields: [created_by], references: [id])
+}
+
+model StockLog {
+  id              String   @id @default(uuid())
+  material_id     String
+  type            String
+  reference_id    String
+  reference_code  String
+  quantity        Float
+  unit_price      Float
+  stock_before    Float
+  stock_after     Float
+  avg_cost_before Float
+  avg_cost_after  Float
+  value_before    Float
+  value_after     Float
+  created_at      DateTime @default(now())
+
+  material Material @relation(fields: [material_id], references: [id])
 }
